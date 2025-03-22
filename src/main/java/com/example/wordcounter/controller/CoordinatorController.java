@@ -1,27 +1,28 @@
 package com.example.wordcounter.controller;
 
+import com.example.wordcounter.dto.NodeRegistration;
 import com.example.wordcounter.service.CoordinatorService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 @RestController
-@RequestMapping("/coordinator")
+@Profile("coordinator")
 public class CoordinatorController {
+    @Autowired
+    private CoordinatorService coordinatorService;
 
-    private final CoordinatorService coordinatorService;
-
-    public CoordinatorController(CoordinatorService coordinatorService) {
-        this.coordinatorService = coordinatorService;
+    @PostMapping("/register")
+    public void registerNode(@RequestBody NodeRegistration registration) {
+        coordinatorService.registerNode(registration);
     }
 
-    @PostMapping("/assign-tasks")
-    public String assignTasks() {
-        coordinatorService.assignTasksToProposers();
-        return "Tasks assigned successfully!";
-    }
-
-    @PostMapping("/broadcast")
-    public String broadcastClusterInfo() {
-        coordinatorService.broadcastClusterInfo();
-        return "Cluster info broadcasted!";
+    @PostMapping("/start-processing")
+    public void startProcessing() throws IOException {
+        coordinatorService.startProcessing();
     }
 }
