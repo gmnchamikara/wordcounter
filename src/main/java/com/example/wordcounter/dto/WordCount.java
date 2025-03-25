@@ -13,16 +13,10 @@ public class WordCount {
     @JsonProperty
     private int count = 0;
 
-    // Thread-safe method to add words
     public synchronized void addWord(String word) {
-        if (word == null || word.isEmpty()) {
-            throw new IllegalArgumentException("Word cannot be null or empty");
-        }
-
         String normalizedWord = word.trim().toLowerCase();
-        if (words.add(normalizedWord)) {
-            count++;
-        }
+        words.add(normalizedWord);
+        count++;
     }
 
     public Set<String> getWords() {
@@ -33,17 +27,13 @@ public class WordCount {
         return count;
     }
 
-    // Package-private for serialization
+    // For deserialization
     public void setCount(int count) {
         this.count = count;
     }
 
-    // Package-private for serialization
-    void setWords(Set<String> words) {
+    public void setWords(Set<String> words) {
         this.words.clear();
-        if (words != null) {
-            this.words.addAll(words);
-        }
-        this.count = this.words.size();
+        this.words.addAll(words);
     }
 }

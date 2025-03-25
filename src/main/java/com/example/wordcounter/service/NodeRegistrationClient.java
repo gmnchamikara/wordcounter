@@ -3,6 +3,7 @@ package com.example.wordcounter.service;
 import com.example.wordcounter.dto.NodeRegistration;
 import com.example.wordcounter.dto.NodeType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -17,9 +18,10 @@ public class NodeRegistrationClient {
     @Value("${node.address}")
     private String nodeAddress;
 
-    @Value("${coordinator.url}")
+    @Value("${coordinator.url}")  // Use the correct property key
     private String coordinatorUrl;
 
+    @Qualifier("")
     @Autowired
     private RestTemplate restTemplate;
 
