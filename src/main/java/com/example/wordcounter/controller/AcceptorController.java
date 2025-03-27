@@ -31,7 +31,7 @@ public class AcceptorController {
         if (validate(results)) {
             restTemplate.postForEntity(learner + "/finalize", results, Void.class);
         } else {
-            throw new IllegalArgumentException("Invalid results received");
+            throw new IllegalArgumentException("Invalid results");
         }
     }
 
@@ -39,7 +39,6 @@ public class AcceptorController {
         return results != null && results.entrySet().stream()
                 .allMatch(e -> Character.isLetter(e.getKey()) &&
                         e.getValue() != null &&
-                        e.getValue().getCount() > 0 &&
-                        e.getValue().getCount() == e.getValue().getWords().size());
+                        e.getValue().getCount() > 0);
     }
 }

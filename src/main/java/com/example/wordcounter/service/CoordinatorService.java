@@ -46,7 +46,9 @@ public class CoordinatorService {
 
     private void broadcastClusterState() {
         ClusterState state = new ClusterState(proposers, acceptors, learner);
-        restTemplate.postForEntity(learner + "/cluster-state", state, Void.class);
+        if (learner != null) {
+            restTemplate.postForEntity(learner + "/cluster-state", state, Void.class);
+        }
         proposers.forEach(p -> restTemplate.postForEntity(p + "/cluster-state", state, Void.class));
         acceptors.forEach(a -> restTemplate.postForEntity(a + "/cluster-state", state, Void.class));
     }
