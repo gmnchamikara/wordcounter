@@ -1,0 +1,13 @@
+{
+  "mqtt": {
+    "brokerUrl": "mqtt://localhost:1883",
+    "topics": {
+      "registration": "nodes/register",
+      "assignment": "coordinator/assign",
+      "lineDistribution": "proposers/line",
+      "proposals": "acceptors/propose",
+      "results": "learners/result",
+      "completion": "proposers/done"
+    }
+  }
+}

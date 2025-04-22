@@ -1,0 +1,25 @@
+{
+  "name": "wordcounter4",
+  "version": "1.0.0",
+  "main": "index.js",
+"scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "start:coordinator": "cross-env ROLE=coordinator node nodes/coordinator.js",
+  "start:proposer": "cross-env ROLE=proposer node nodes/proposer.js",
+  "start:acceptor": "cross-env ROLE=acceptor node nodes/acceptor.js",
+  "start:learner": "cross-env ROLE=learner node nodes/learner.js"
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "debug": "^4.4.0",
+    "dotenv": "^16.3.1",
+    "mqtt": "^4.3.7",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}
