@@ -9,18 +9,18 @@ function publish(topic, message, role = "sidecar") {
 }
 
 function subscribe(topic, callback, role) {
-  mqttClient.subscribe(topic, (message) => {
-    if (typeof message === "string") {
+  client.subscribe(topic);
+  client.on("message", (receivedTopic, message) => {
+    console.log(`!!!! [DEBUG] MQTT Message on ${topic}:`, message.toString());
+    if (receivedTopic === topic) {
       try {
-        message = JSON.parse(message);
-      } catch (_) {}
+        const parsed = JSON.parse(message.toString());
+        callback(parsed);
+      } catch (err) {
+        callback(message.toString());
+      }
     }
-    callback(message);
   });
-}
-
-function publish(topic, payload, role) {
-  mqttClient.publish(topic, JSON.stringify(payload));
 }
 
 function announce(role, nodeId) {

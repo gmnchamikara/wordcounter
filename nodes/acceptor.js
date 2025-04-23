@@ -8,7 +8,8 @@ const acceptorId = `acceptor-${Math.floor(Math.random() * 10000)}`;
 
 const proposerId = `proposer-${Math.floor(Math.random() * 10000)}`;
 
-sidecar.announce(ROLES.PROPOSER, proposerId);
+// sidecar.announce(ROLES.PROPOSER, proposerId);
+sidecar.announce(ROLES.ACCEPTOR, acceptorId);
 
 sidecar.subscribe(
   TOPICS.PROPOSALS,

@@ -31,7 +31,8 @@ sidecar.subscribe(TOPICS.ANNOUNCE, ({ role, nodeId }) => {
   sidecar.publish(TOPICS.CLUSTER_STATE, state, ROLES.COORDINATOR);
 });
 
-sidecar.announce(ROLES.PROPOSER, proposerId);
+// sidecar.announce(ROLES.PROPOSER, proposerId);
+sidecar.announce(ROLES.COORDINATOR, coordinatorId);
 
 function announceCluster() {
   const info = {
