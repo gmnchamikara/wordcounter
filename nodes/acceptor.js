@@ -1,5 +1,3 @@
-// nodes/acceptor.js
-
 const { ROLES, TOPICS } = require("../config");
 const log = require("../common/logger");
 const sidecar = require("./sidecar");

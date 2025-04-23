@@ -31,7 +31,6 @@ sidecar.subscribe(TOPICS.ANNOUNCE, ({ role, nodeId }) => {
   sidecar.publish(TOPICS.CLUSTER_STATE, state, ROLES.COORDINATOR);
 });
 
-// sidecar.announce(ROLES.PROPOSER, proposerId);
 sidecar.announce(ROLES.COORDINATOR, coordinatorId);
 
 function announceCluster() {
@@ -69,11 +68,11 @@ function registerNode(type, id) {
 
 function init(filePath) {
   // Simulate node registration
-  registerNode(ROLES.PROPOSER, "proposer-1");
-  registerNode(ROLES.PROPOSER, "proposer-2");
-  registerNode(ROLES.ACCEPTOR, "acceptor-1");
-  registerNode(ROLES.ACCEPTOR, "acceptor-2");
-  registerNode(ROLES.LEARNER, "learner-1");
+  registerNode(ROLES.PROPOSER, "--- Proposer-1");
+  registerNode(ROLES.PROPOSER, "--- Proposer-2");
+  registerNode(ROLES.ACCEPTOR, "--- Acceptor-1");
+  registerNode(ROLES.ACCEPTOR, "--- Acceptor-2");
+  registerNode(ROLES.LEARNER, "--- Learner-1");
 
   assignLetterRanges();
 
