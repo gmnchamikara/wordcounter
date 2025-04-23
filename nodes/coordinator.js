@@ -1,104 +1,89 @@
-const fs = require("fs");
-const Sidecar = require("../lib/sidecar");
+const { TOPICS, ROLES, LETTER_RANGES } = require("../config");
+const { readLines } = require("../common/utils");
+const log = require("../common/logger");
+const sidecar = require("./sidecar");
+const path = require("path");
 
-class Coordinator {
-  constructor() {
-    console.log("[Coordinator] Starting coordinator node...");
-    this.sidecar = new Sidecar("coordinator");
+const coordinatorId = `coordinator-${Math.floor(Math.random() * 10000)}`;
+log(ROLES.COORDINATOR, `${coordinatorId} started`);
 
-    this.proposers = new Set();
-    this.acceptors = new Set();
-    this.learners = new Set();
+const proposers = [];
+const acceptors = [];
+const learners = [];
 
-    this.setupListeners();
-
-    this.sidecar.client.on("error", (err) => {
-      console.error("[Coordinator] MQTT error:", err);
-    });
+sidecar.subscribe(TOPICS.ANNOUNCE, ({ role, nodeId }) => {
+  if (role === ROLES.PROPOSER && !proposers.includes(nodeId)) {
+    proposers.push(nodeId);
+  } else if (role === ROLES.ACCEPTOR && !acceptors.includes(nodeId)) {
+    acceptors.push(nodeId);
+  } else if (role === ROLES.LEARNER && !learners.includes(nodeId)) {
+    learners.push(nodeId);
   }
 
-  setupListeners() {
-    console.log("[Coordinator] Setting up listeners...");
-    this.sidecar.client.on("message", (topic, message) => {
-      const msg = JSON.parse(message.toString());
-      console.log(`[Coordinator] Message received on topic '${topic}':`, msg);
+  const state = {
+    timestamp: Date.now(),
+    proposers,
+    acceptors,
+    learners,
+  };
 
-      if (topic === this.sidecar.topics.register) {
-        this.handleRegistration(msg);
-      }
-    });
-  }
+  log(ROLES.COORDINATOR, `📡 Updated cluster state: ${JSON.stringify(state)}`);
+  sidecar.publish(TOPICS.CLUSTER_STATE, state, ROLES.COORDINATOR);
+});
 
-  handleRegistration({ id, role }) {
-    console.log(`[Coordinator] Registering new ${role}: ${id}`);
-    switch (role) {
-      case "proposer":
-        this.proposers.add(id);
-        break;
-      case "acceptor":
-        this.acceptors.add(id);
-        break;
-      case "learner":
-        this.learners.add(id);
-        break;
-      default:
-        console.warn(`[Coordinator] Unknown role received: ${role}`);
-    }
-    console.log(
-      `[Coordinator] Current counts - Proposers: ${this.proposers.size}, Acceptors: ${this.acceptors.size}, Learners: ${this.learners.size}`
-    );
-  }
+sidecar.announce(ROLES.PROPOSER, proposerId);
 
-  assignRanges() {
-    const ranges = this.calculateRanges(this.proposers.size);
-    const proposers = Array.from(this.proposers);
-
-    ranges.forEach((range, idx) => {
-      const message = {
-        proposerId: proposers[idx],
-        start: range.start,
-        end: range.end,
-      };
-      this.sidecar.client.publish(
-        this.sidecar.topics.assign,
-        JSON.stringify(message)
-      );
-      console.log(
-        `[Coordinator] Assigned range to proposer ${proposers[idx]}: ${range.start} - ${range.end}`
-      );
-    });
-  }
-
-  calculateRanges(numProposers) {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const rangeSize = Math.ceil(26 / numProposers);
-    const ranges = Array.from({ length: numProposers }, (_, i) => ({
-      start: letters[i * rangeSize],
-      end: letters[Math.min((i + 1) * rangeSize - 1, 25)],
-    }));
-    console.log(
-      `[Coordinator] Calculated ranges for ${numProposers} proposers:`,
-      ranges
-    );
-    return ranges;
-  }
-
-  processDocument(path) {
-    console.log(`[Coordinator] Processing document: ${path}`);
-    const lines = fs.readFileSync(path, "utf-8").split("\n");
-    lines.forEach((line) => {
-      this.sidecar.client.publish(
-        this.sidecar.topics.line,
-        JSON.stringify({ line })
-      );
-      console.log(`[Coordinator] Published line: ${line}`);
-    });
-    this.sidecar.client.publish(
-      this.sidecar.topics.line,
-      JSON.stringify({ done: true })
-    );
-    console.log(`[Coordinator] Published DONE message`);
-  }
+function announceCluster() {
+  const info = {
+    proposers,
+    acceptors,
+    learner,
+    letterRanges: LETTER_RANGES,
+  };
+  sidecar.publish(TOPICS.CLUSTER_ANNOUNCE, info, ROLES.COORDINATOR);
 }
 
-module.exports = Coordinator;
+function assignLetterRanges() {
+  const assignments = proposers.map((proposer, index) => ({
+    proposerId: proposer.id,
+    range: LETTER_RANGES[index % LETTER_RANGES.length],
+  }));
+
+  sidecar.publish(TOPICS.LETTER_ASSIGNMENTS, assignments, ROLES.COORDINATOR);
+}
+
+function streamDocument(filePath) {
+  readLines(filePath, (line) => {
+    sidecar.publish(TOPICS.DOCUMENT_LINES, { line }, ROLES.COORDINATOR);
+  });
+}
+
+function registerNode(type, id) {
+  if (type === ROLES.PROPOSER) proposers.push({ id });
+  else if (type === ROLES.ACCEPTOR) acceptors.push({ id });
+  else if (type === ROLES.LEARNER) learner = { id };
+
+  announceCluster();
+}
+
+function init(filePath) {
+  // Simulate node registration
+  registerNode(ROLES.PROPOSER, "proposer-1");
+  registerNode(ROLES.PROPOSER, "proposer-2");
+  registerNode(ROLES.ACCEPTOR, "acceptor-1");
+  registerNode(ROLES.ACCEPTOR, "acceptor-2");
+  registerNode(ROLES.LEARNER, "learner-1");
+
+  assignLetterRanges();
+
+  setTimeout(() => {
+    streamDocument(filePath);
+  }, 1000); // Give time for all nodes to subscribe
+}
+
+// Entry Point
+if (require.main === module) {
+  const filePath = path.join(__dirname, "../documents/sample.txt");
+  log(ROLES.COORDINATOR, "Coordinator starting...");
+  init(filePath);
+}

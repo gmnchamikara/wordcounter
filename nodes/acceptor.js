@@ -1,32 +1,40 @@
-const Sidecar = require("../lib/sidecar");
+// nodes/acceptor.js
 
-class Acceptor {
-  constructor() {
-    this.sidecar = new Sidecar("acceptor");
-    this.setupListeners();
-  }
+const { ROLES, TOPICS } = require("../config");
+const log = require("../common/logger");
+const sidecar = require("./sidecar");
 
-  setupListeners() {
-    this.sidecar.client.subscribe(this.sidecar.topics.propose);
+const acceptorId = `acceptor-${Math.floor(Math.random() * 10000)}`;
 
-    this.sidecar.client.on("message", (topic, message) => {
-      if (topic === this.sidecar.topics.propose) {
-        const proposal = JSON.parse(message.toString());
-        if (this.validate(proposal)) {
-          this.sidecar.client.publish(
-            this.sidecar.topics.result,
-            JSON.stringify(proposal)
-          );
-        }
-      }
-    });
-  }
+const proposerId = `proposer-${Math.floor(Math.random() * 10000)}`;
 
-  validate({ results }) {
-    return results.every(({ char, words }) =>
-      words.every((word) => word[0].toUpperCase() === char)
+sidecar.announce(ROLES.PROPOSER, proposerId);
+
+sidecar.subscribe(
+  TOPICS.PROPOSALS,
+  (proposal) => {
+    const { proposerId, letter, count, words } = proposal;
+
+    // In a real Paxos implementation, consensus logic goes here.
+    // For this prototype, we assume it's always valid.
+
+    log(
+      ROLES.ACCEPTOR,
+      `${acceptorId} accepted proposal from ${proposerId} for ${letter}: ${count}`
     );
-  }
-}
 
-module.exports = Acceptor;
+    sidecar.publish(
+      TOPICS.VALIDATED_COUNTS,
+      {
+        acceptorId,
+        letter,
+        count,
+        words,
+      },
+      ROLES.ACCEPTOR
+    );
+  },
+  ROLES.ACCEPTOR
+);
+
+log(ROLES.ACCEPTOR, `${acceptorId} is listening for proposals...`);

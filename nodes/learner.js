@@ -1,32 +1,43 @@
-const Sidecar = require("../lib/sidecar");
+// nodes/learner.js
 
-class Learner {
-  constructor() {
-    this.sidecar = new Sidecar("learner");
-    this.results = new Map();
-    this.setupListeners();
-  }
+const { ROLES, TOPICS } = require("../config");
+const log = require("../common/logger");
+const sidecar = require("./sidecar");
 
-  setupListeners() {
-    this.sidecar.client.subscribe(this.sidecar.topics.result);
+const learnerId = `learner-${Math.floor(Math.random() * 10000)}`;
+const finalCounts = {};
 
-    this.sidecar.client.on("message", (topic, message) => {
-      if (topic === this.sidecar.topics.result) {
-        const { results } = JSON.parse(message.toString());
-        results.forEach(({ char, count, words }) => {
-          this.results.set(char, { count, words });
-        });
-        this.display();
-      }
+const proposerId = `proposer-${Math.floor(Math.random() * 10000)}`;
+
+sidecar.announce(ROLES.PROPOSER, proposerId);
+
+sidecar.subscribe(
+  TOPICS.VALIDATED_COUNTS,
+  (msg) => {
+    const { letter, count, words } = msg;
+
+    if (!finalCounts[letter]) {
+      finalCounts[letter] = { count: 0, words: [] };
+    }
+
+    finalCounts[letter].count += count;
+    finalCounts[letter].words.push(...words);
+
+    log(ROLES.LEARNER, `Received count for ${letter}: ${count}`);
+  },
+  ROLES.LEARNER
+);
+
+// Optionally broadcast final result every X seconds
+setInterval(() => {
+  sidecar.publish(TOPICS.FINAL_RESULT, finalCounts, ROLES.LEARNER);
+
+  console.clear();
+  console.log("\n📘 Final Aggregated Word Counts (Learner):");
+  Object.keys(finalCounts)
+    .sort()
+    .forEach((letter) => {
+      const entry = finalCounts[letter];
+      console.log(`${letter} ➜ ${entry.count} [${entry.words.join(", ")}]`);
     });
-  }
-
-  display() {
-    console.log("Final Results:");
-    Array.from(this.results.entries()).forEach(([char, data]) => {
-      console.log(`${char} ${data.count} ${data.words.join(", ")}`);
-    });
-  }
-}
-
-module.exports = Learner;
+}, 5000);

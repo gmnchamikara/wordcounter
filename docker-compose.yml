@@ -1,6 +1,64 @@
-version: '3'
+version: '3.8'
+
 services:
-  mosquitto:
-    image: eclipse-mosquitto
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt-broker
     ports:
       - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  coordinator:
+    build: .
+    container_name: coordinator
+    command: node index.js coordinator
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER_URL=mqtt://mqtt-broker
+
+  proposer1:
+    build: .
+    container_name: proposer1
+    command: node index.js proposer
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER_URL=mqtt://mqtt-broker
+
+  proposer2:
+    build: .
+    container_name: proposer2
+    command: node index.js proposer
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER_URL=mqtt://mqtt-broker
+
+  acceptor1:
+    build: .
+    container_name: acceptor1
+    command: node index.js acceptor
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER_URL=mqtt://mqtt-broker
+
+  acceptor2:
+    build: .
+    container_name: acceptor2
+    command: node index.js acceptor
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER_URL=mqtt://mqtt-broker
+
+  learner:
+    build: .
+    container_name: learner
+    command: node index.js learner
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER_URL=mqtt://mqtt-broker

@@ -1,28 +1,29 @@
-const Coordinator = require("./nodes/coordinator");
-const Proposer = require("./nodes/proposer");
-const Acceptor = require("./nodes/acceptor");
-const Learner = require("./nodes/learner");
-require("dotenv").config();
+// index.js
 
-const role = process.env.NODE_ROLE;
+const { ROLES } = require("./config");
+
+const role = process.argv[2];
+
+if (!role) {
+  console.log("Usage: node index.js <role>");
+  console.log("Available roles: coordinator, proposer, acceptor, learner");
+  process.exit(1);
+}
 
 switch (role) {
-  case "coordinator":
-    const coordinator = new Coordinator();
-    setTimeout(() => {
-      coordinator.assignRanges();
-      coordinator.processDocument("./input.txt");
-    }, 5000); // Wait 5s for nodes to register
+  case ROLES.COORDINATOR:
+    require("./nodes/coordinator");
     break;
-  case "proposer":
-    new Proposer();
+  case ROLES.PROPOSER:
+    require("./nodes/proposer");
     break;
-  case "acceptor":
-    new Acceptor();
+  case ROLES.ACCEPTOR:
+    require("./nodes/acceptor");
     break;
-  case "learner":
-    new Learner();
+  case ROLES.LEARNER:
+    require("./nodes/learner");
     break;
   default:
-    throw new Error("Invalid role");
+    console.error(`Invalid role "${role}"`);
+    process.exit(1);
 }
