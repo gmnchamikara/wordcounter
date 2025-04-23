@@ -6,7 +6,7 @@ const client = mqtt.connect(MQTT_BROKER_URL);
 const connectWithRetry = () => {
   const client = mqtt.connect(MQTT_BROKER_URL);
   client.on("connect", () => {
-    console.log("Connected to MQTT broker");
+    console.log("Connected to MQTT broker ...!");
   });
   client.on("error", (err) => {
     console.error("Connection failed, retrying in 5s", err.message);

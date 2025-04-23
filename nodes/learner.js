@@ -45,6 +45,11 @@ setInterval(() => {
     .sort()
     .forEach((letter) => {
       const entry = finalCounts[letter];
-      console.log("@@@@",`${letter} ➜ ${entry.count} [${entry.words.join(", ")}]`,"@@@");
+      console.log(
+        "@@@@",
+        `${letter} ➜ ${entry.count} [${entry.words.join(", ")}]`,
+        "@@@"
+      );
     });
 }, 5000);
+
