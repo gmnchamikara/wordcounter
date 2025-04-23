@@ -1,62 +1,55 @@
-const Sidecar = require("../lib/sidecar");
+const { ROLES, TOPICS } = require("../config");
+const { isInRange, getWordsFromLine } = require("../common/utils");
+const log = require("../common/logger");
+const sidecar = require("./sidecar");
 
-class Proposer {
-  constructor() {
-    this.sidecar = new Sidecar("proposer");
-    this.range = null;
-    this.counts = new Map();
-    this.setupListeners();
-  }
+const proposerId = `proposer-${Math.floor(Math.random() * 10000)}`;
+let myRange = null;
 
-  setupListeners() {
-    this.sidecar.client.subscribe(this.sidecar.topics.assign);
-    this.sidecar.client.subscribe(this.sidecar.topics.line);
+sidecar.announce(ROLES.PROPOSER, proposerId);
 
-    this.sidecar.client.on("message", (topic, message) => {
-      const msg = JSON.parse(message.toString());
+sidecar.subscribe(
+  TOPICS.LETTER_ASSIGNMENTS,
+  (assignments) => {
+    const assignment = assignments.find((a) => a.proposerId === proposerId);
+    if (assignment) {
+      myRange = assignment.range;
+      log(ROLES.PROPOSER, `${proposerId} assigned range ${myRange}`);
+    }
+  },
+  ROLES.PROPOSER
+);
 
-      if (
-        topic === this.sidecar.topics.assign &&
-        msg.proposerId === this.sidecar.id
-      ) {
-        this.range = msg;
-      } else if (topic === this.sidecar.topics.line) {
-        msg.done ? this.sendResults() : this.processLine(msg.line);
+sidecar.subscribe(
+  TOPICS.DOCUMENT_LINES,
+  ({ line }) => {
+    if (!myRange) return;
+
+    const words = getWordsFromLine(line);
+    const result = {};
+
+    for (const word of words) {
+      if (isInRange(word, myRange)) {
+        const char = word[0].toUpperCase();
+        if (!result[char]) result[char] = { count: 0, words: [] };
+        result[char].count++;
+        result[char].words.push(word);
       }
-    });
-  }
+    }
 
-  processLine(line) {
-    line.split(/\s+/).forEach((word) => {
-      const firstChar = word[0].toUpperCase();
-      if (this.inRange(firstChar)) {
-        const entry = this.counts.get(firstChar) || {
-          count: 0,
-          words: new Set(),
-        };
-        entry.count++;
-        entry.words.add(word.toLowerCase());
-        this.counts.set(firstChar, entry);
-      }
-    });
-  }
+    for (const [letter, data] of Object.entries(result)) {
+      sidecar.publish(
+        TOPICS.PROPOSALS,
+        {
+          proposerId,
+          letter,
+          ...data,
+        },
+        ROLES.PROPOSER
+      );
+    }
+  },
+  ROLES.PROPOSER
+);
 
-  inRange(char) {
-    return char >= this.range.start && char <= this.range.end;
-  }
-
-  sendResults() {
-    const results = Array.from(this.counts.entries()).map(([char, data]) => ({
-      char,
-      count: data.count,
-      words: Array.from(data.words),
-    }));
-
-    this.sidecar.client.publish(
-      this.sidecar.topics.propose,
-      JSON.stringify({ proposerId: this.sidecar.id, results })
-    );
-  }
-}
-
-module.exports = Proposer;
+log(ROLES.PROPOSER, `${proposerId} is listening...`);

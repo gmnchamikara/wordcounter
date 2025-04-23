@@ -1,25 +1,19 @@
 {
-  "name": "wordcounter4",
+  "name": "distributed-word-counter",
   "version": "1.0.0",
+  "description": "A Paxos-based distributed system to count words by their starting letters using Node.js and MQTT",
   "main": "index.js",
-"scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "start:coordinator": "cross-env ROLE=coordinator node nodes/coordinator.js",
-  "start:proposer": "cross-env ROLE=proposer node nodes/proposer.js",
-  "start:acceptor": "cross-env ROLE=acceptor node nodes/acceptor.js",
-  "start:learner": "cross-env ROLE=learner node nodes/learner.js"
-},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "debug": "^4.4.0",
-    "dotenv": "^16.3.1",
-    "mqtt": "^4.3.7",
-    "uuid": "^9.0.0"
+  "scripts": {
+    "start": "node index.js",
+    "coordinator": "node index.js coordinator",
+    "proposer": "node index.js proposer",
+    "acceptor": "node index.js acceptor",
+    "learner": "node index.js learner"
   },
-  "devDependencies": {
-    "cross-env": "^7.0.3"
+  "author": "Nuwan Chamikara",
+  "license": "MIT",
+  "dependencies": {
+    "mqtt": "^5.0.0",
+    "uuid": "^9.0.0"
   }
 }

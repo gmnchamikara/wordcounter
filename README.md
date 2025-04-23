@@ -11,33 +11,50 @@ Each node runs as a separate process and communicates over MQTT.
 
 ## 🚀 How to Run the System
 
-### 1. Start the MQTT Broker
-
-Ensure Docker is installed and running. Then start the MQTT broker (Mosquitto):
+### 1. Install Dependencies
 
 ```bash
-docker-compose up -d mosquitto
+npm install
 ```
 
-### 2. Start System Components
+### 2. Running with Docker Compose
 
-Coordinator	
+```bash
+docker-compose up --build
+```
+
+### 3. Running Manually (without Docker)
+
+#### Step 1: Start MQTT Broker Locally (optional if you have Docker)
+
+Install and run Mosquitto:
+
+# Install Mosquitto
+sudo apt install mosquitto
+
+# Run it (defaults to port 1883)
+mosquitto
+
+#### Step 2: Start Coordinator
 
 ```bash 
-npm run start:coordinator
+MQTT_BROKER_URL=mqtt://localhost npm run coordinator
 ```
-Proposer
+
+#### Step 3: Start Proposer(s)
 
 ```bash 
-npm run start:proposer
+MQTT_BROKER_URL=mqtt://localhost npm run proposer
 ```
-Acceptor
+Repeat this in new terminals for more proposers.
 
+#### Step 4: Start Acceptor(s)
 ```bash 
-npm run start:acceptor
+MQTT_BROKER_URL=mqtt://localhost npm run acceptor
 ```
-Learner	
 
+#### Step 5: Start Learner
 ```bash 
-npm run start:learner
+MQTT_BROKER_URL=mqtt://localhost npm run learner
 ```
+
